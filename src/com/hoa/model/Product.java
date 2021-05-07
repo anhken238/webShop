@@ -1,10 +1,14 @@
 package com.hoa.model;
 
+import java.math.BigDecimal;
+
+import com.hoa.common.Validation;
+
 public class Product {
 	String code;
 	String name;
-	String price;
-	String amount;
+	float price;
+	int amount;
 	String description;
 	String manufacturingDate;
 	String litmiDate;
@@ -12,7 +16,7 @@ public class Product {
 	String path;
 	String status;
 
-	public Product(String code, String name, String price, String amount, String description, String manufacturingDate,
+	public Product(String code, String name, float price, int amount, String description, String manufacturingDate,
 			String litmiDate, String image) {
 		super();
 		this.code = code;
@@ -45,19 +49,15 @@ public class Product {
 	}
 
 	public String getPrice() {
-		return price;
+		String priceDisplay = "";
+		if (!new Validation().checkNull(String.valueOf(price))) {
+			priceDisplay = String.format("%.2f", price);
+		}
+		return priceDisplay;
 	}
 
-	public void setPrice(String price) {
+	public void setPrice(float price) {
 		this.price = price;
-	}
-
-	public String getAmount() {
-		return amount;
-	}
-
-	public void setAmount(String amount) {
-		this.amount = amount;
 	}
 
 	public String getDescription() {
@@ -92,14 +92,20 @@ public class Product {
 		this.image = image;
 	}
 
-	
-	
 	public String getPath() {
 		return path;
 	}
 
 	public void setPath(String path) {
 		this.path = path;
+	}
+
+	public int getAmount() {
+		return amount;
+	}
+
+	public void setAmount(int amount) {
+		this.amount = amount;
 	}
 
 	public String getStatus() {
