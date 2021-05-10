@@ -21,8 +21,9 @@
 <script
 	src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
 <style type="text/css">
-<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
-body {
+<
+script src ="https: //ajax.googleapis.com /ajax/libs/jquery/1.11.1
+	/jquery.min.js "> </script>body {
 	color: #566787;
 	background: #f5f5f5;
 	font-family: 'Varela Round', sans-serif;
@@ -284,7 +285,6 @@ table.table .avatar {
 .modal form label {
 	font-weight: normal;
 }
-
 </style>
 <script type="text/javascript">
 	$(document).ready(function() {
@@ -311,40 +311,76 @@ table.table .avatar {
 		});
 	});
 
-	 $(document).ready(function () {
-         var patternDate = $("#limitDate1").val();
-         $("#textWarning1").hide();
-         $("#limitDate1").change(function () {
-             $("#textWarning1").show();
-             if ($("#limitDate1").val() === patternDate) {
-                 $("#textWarning1").hide();
-             }
-         });
-     });
-	 $(document).ready(function () {
-         var patternDate = $("#limitDate2").val();
-         $("#textWarning2").hide();
-         $("#limitDate2").change(function () {
-             $("#textWarning2").show();
-             if ($("#limitDate2").val() === patternDate) {
-                 $("#textWarning2").hide();
-             }
-         });
-     });
-	 
-	/*  $(document).ready(function () {
-         $(".edit").click(function () {
-             $("#textWarning2").show();
-             if ($("#limitDate2").val() === patternDate) {
-                 $("#textWarning2").hide();
-             }
-         });
-     }); */
+	$(document).ready(function() {
+		var patternDate = $("#limitDate1").val();
+		$("#textWarning1").hide();
+		$("#limitDate1").change(function() {
+			$("#textWarning1").show();
+			if ($("#limitDate1").val() === patternDate) {
+				$("#textWarning1").hide();
+			}
+		});
+	});
+	$(document).ready(function() {
+		var patternDate = $("#limitDate2").val();
+		$("#textWarning2").hide();
+		$("#limitDate2").change(function() {
+			$("#textWarning2").show();
+			if ($("#limitDate2").val() === patternDate) {
+				$("#textWarning2").hide();
+			}
+		});
+	});
+
+	function updateFunction(e) {
+		var elem = $(e.target);
+		var parentRow = elem.parents('tr');
+		/*   $("#row_name").val(parentRow.find("[name='name']").text()); */
+		$("#name").val(parentRow.find("[name='name']").text());
+		$("#price").val(parentRow.find("[name='price']").text());
+		$("#code").val(parentRow.find("[name='code']").text());
+		$("#amount").val(parentRow.find("[name='amount']").text());
+		$("#description").val(parentRow.find("[name='description']").text());
+		/*dd-mm-yy -> mm-dd-yy*/
+		var date = formatDate(parentRow.find("[name='manufacturingDate']").text());
+		$("#manufacturingDate").val(date);
+		
+		var date = formatDate(parentRow.find("[name='limitDate']").text());
+		$("#limitDate2").val(date);
+		//considering you saved the values are male and female in db
+		/*  
+		if (parentRow.find("[name='gender']").text() == 'male') {
+				$('[value="M"]').attr('checked', true)
+			}
+			else {
+				$('[value="F"]').attr('checked', true)
+			} 
+		
+		$("#birthdate").val(parentRow.find("[name='birthdate']").text());
+		*/
+	}
+	
+	function formatDate(dateInput) {
+		var datearray = dateInput.split("-");
+		var newdate = datearray[1] + '-' + datearray[0] + '-' + datearray[2];
+
+		var d = new Date(newdate),
+			month = '' + (d.getMonth() + 1),
+			day = '' + d.getDate(),
+			year = d.getFullYear();
+
+		if (month.length < 2)
+			month = '0' + month;
+		if (day.length < 2)
+			day = '0' + day;
+
+		return [year, month, day].join('-');
+	}
 </script>
 </head>
 <body>
 	<div class="container">
-		<h2>
+		<h2 Style="margin-bottom: 2%">
 			<a href="${pageContext.request.contextPath}/Products?action=showlist">Manage
 				<b>Products</b>
 			</a>
@@ -403,35 +439,36 @@ table.table .avatar {
 						<th><span class="custom-checkbox"> <input
 								type="checkbox" id="selectAll"> <label for="selectAll"></label>
 						</span></th>
-						<th>Code</th>
-						<th>Name</th>
-						<th>Price</th>
-						<th>Amount</th>
-						<th>ManufacturingDate</th>
-						<th>LimitDate</th>
-						<th>Description</th>
-						<th>Status</th>
-						<th>Actions</th>
+						<th>MãSảnPhẩm</th>
+						<th>TênSảnPhẩm</th>
+						<th>ĐơnGiá</th>
+						<th>SốLượng</th>
+						<th>NgàySảnXuất</th>
+						<th>NgàyHếtHạn</th>
+						<th>Mô Tả Sản Phẩm</th>
+						<th>TrạngThái</th>
+						<th>Sửa/Xóa</th>
 					</tr>
 				</thead>
 				<tbody>
 					<c:forEach items="${listProduct}" var="product">
-						<tr>
+						<tr data-row-name="${product.getCode()}">
 							<td><span class="custom-checkbox"> <input
 									type="checkbox" id="checkbox1" name="idList"
 									value="${product.getCode()}"> <label for="checkbox1"></label>
 							</span></td>
-							<td>${product.getCode()}</td>
-							<td>${product.getName()}</td>
-							<td>${product.getPrice()}</td>
-							<td>${product.getAmount()}</td>
-							<td>${product.getManufacturingDate()}</td>
-							<td>${product.getLitmiDate()}</td>
-							<td>${product.getDescription()}</td>
+							<td name="code">${product.getCode()}</td>
+							<td name="name">${product.getName()}</td>
+							<td name="price">${product.getPrice()}</td>
+							<td name="amount">${product.getAmount()}</td>
+							<td name="manufacturingDate">${product.getManufacturingDate()}</td>
+							<td name="limitDate">${product.getLitmiDate()}</td>
+							<td name="description">${product.getDescription()}</td>
 							<td>${product.getStatus()}</td>
-							<td><a href="#editEmployeeModal" class="edit"
+							<td><a href="#editEmployeeModal" class="edit" onclick="updateFunction(event)"
 								data-toggle="modal"><i class="material-icons"
-									data-toggle="tooltip" title="Edit">&#xE254;</i></a> <a
+									data-toggle="tooltip" title="Edit"
+									data-record="${product.getCode()}">&#xE254;</i></a> <a
 								href="${pageContext.request.contextPath}/Products?action=delete&id=${product.getCode()}"
 								class="delete" data-toggle="modal"
 								onclick="return confirm('Are you sure you want to delete this item?');"><i
@@ -463,53 +500,47 @@ table.table .avatar {
 			<div class="modal-content">
 				<form
 					action="${pageContext.request.contextPath}/Products?action=create"
-					method="post" >
+					method="post">
 					<div class="modal-header">
 						<h4 class="modal-title">Add Product</h4>
 						<button type="button" class="close" data-dismiss="modal"
 							aria-hidden="true">&times;</button>
 					</div>
-					<!-- <th>Code</th>
-						<th>Name</th>
-						<th>Price</th>
-						<th>Amount</th>
-						<th>ManufacturingDate</th>
-						<th>LimitDate</th>
-						<th>Description</th> -->
 					<div class="modal-body">
 						<div class="form-group">
-							<label>Code</label> 
-							<input type="text" class="form-control" name="code" required>
+							<label>Mã Sản Phẩm</label> <input type="text" class="form-control"
+								name="code" required>
 						</div>
 						<div class="form-group">
-							<label>Name</label> <input type="text" class="form-control" name="name"
-								required>
+							<label>Tên Sản Phẩm</label> <input type="text" class="form-control"
+								name="name" required>
 						</div>
 						<div class="form-group">
-							<label>Price</label> <input class="form-control" type="number" name="price"
-								min="0.00" max="1000000000000.00" step="0.01" required />
+							<label>Đơn Giá</label> <input class="form-control" type="number"
+								name="price" min="0.00" max="1000000000000.00" step="0.01"
+								required />
 						</div>
 						<div class="form-group">
-							<label>Amount</label> <input type="number" min="0" 
-								max="1000000000000" class="form-control" name ="amount" required>
+							<label>Số Lượng</label> <input type="number" min="0"
+								max="1000000000000" class="form-control" name="amount" required>
 						</div>
 						<div class="form-group">
-							<label>ManufacturingDate</label> <input type="Date"
+							<label>Ngày Sản Xuất</label> <input type="Date"
 								class="form-control" name="manufacturingDate" required>
 						</div>
 						<div class="form-group">
-							<label>Limit Date</label> <input id="limitDate1"  type="DATE"
+							<label>Ngày Hết Hạn</label> <input id="limitDate1" type="DATE"
 								class="form-control" name="limitDate" required>
 						</div>
 						<div class="form-group" id="textWarning1">
-							<span  style="color: red; margin-top: 5px;">Sẽ
-								cảnh báo trước <input style="width: 15%; height: 70%;"
-								type="number" placeholder="day" name = "timeWarning1" required> ngày khi sản
-								phẩm hết hạn
+							<span style="color: red; margin-top: 5px;">Sẽ cảnh báo
+								trước <input style="width: 15%; height: 70%;" type="number"
+								placeholder="day" name="timeWarning1" > ngày khi
+								sản phẩm hết hạn
 							</span>
 						</div>
 						<div class="form-group">
-							<label>Description</label>
+							<label>Mô Tả Sản Phẩm</label>
 							<textarea class="form-control" name="description" required></textarea>
 						</div>
 					</div>
@@ -526,9 +557,7 @@ table.table .avatar {
 	<div id="editEmployeeModal" class="modal fade">
 		<div class="modal-dialog">
 			<div class="modal-content">
-				<form
-					action="${pageContext.request.contextPath}/Products?action=edit&id=${product.getCode()}"
-					method="post">
+				<form action="${pageContext.request.contextPath}/Products?action=edit" method="post" >
 					<div class="modal-header">
 						<h4 class="modal-title">Edit Product</h4>
 						<button type="button" class="close" data-dismiss="modal"
@@ -536,43 +565,43 @@ table.table .avatar {
 					</div>
 					<div class="modal-body">
 						<div class="form-group">
-							<label>Code</label> <input type="text" class="form-control"
+							<label>Mã Sản Phẩm</label> <input type="text" id="code" name="code" class="form-control"
 								required>
 						</div>
 						<div class="form-group">
-							<label>Name</label> <input type="email" class="form-control"
+							<label>Tên Sản Phẩm</label> <input type="text" id="name" name="name" class="form-control"
 								required>
 						</div>
 						<div class="form-group">
-							<label>Price</label> <input class="form-control" type="number"
+							<label>Đơn Giá</label> <input class="form-control" type="number" id="price" name="price"
 								min="0.00" max="1000000000000.00" step="0.01" required />
 						</div>
 						<div class="form-group">
-							<label>Amount</label> <input type="number" min="0"
+							<label>Số Lượng</label> <input type="number" min="0" id="amount" name="amount"
 								max="1000000000000" class="form-control" required>
 						</div>
 						<div class="form-group">
-							<label>Manufacturing Date</label> <input type="Date"
+							<label>Ngày Sản Xuất</label> <input type="Date" id="manufacturingDate" name="manufacturingDate"
 								class="form-control" required>
 						</div>
 						<div class="form-group">
-							<label>Limit Date</label> <input id="limitDate2" name="limitDate" type="DATE"
-								class="form-control" required>
+							<label>Ngày Hết Hạn</label> <input id="limitDate2" name="limitDate" 
+								type="DATE" class="form-control" required>
 						</div>
 						<div class="form-group" id="textWarning2">
-							<span  style="color: red; margin-top: 5px;">Sẽ
-								cảnh báo trước <input style="width: 15%; height: 70%;"
-								type="number" placeholder="day" name = "timeWarning2" required> ngày khi sản
-								phẩm hết hạn
+							<span style="color: red; margin-top: 5px;">Sẽ cảnh báo
+								trước <input style="width: 15%; height: 70%;" type="number"
+								placeholder="day" name="timeWarning2" > ngày khi
+								sản phẩm hết hạn
 							</span>
 						</div>
 						<div class="form-group">
-							<label>Description</label>
-							<textarea class="form-control" required></textarea>
+							<label>Mô Tả Sản Phẩm</label>
+							<textarea class="form-control" id ="description" name="description"  required></textarea>
 						</div>
 					</div>
 					<div class="modal-footer">
-						<input type="button" class="btn btn-default" data-dismiss="modal"
+						<input type="button" class="btn btn-default"  data-dismiss="modal"
 							value="Cancel"> <input type="submit" class="btn btn-info"
 							value="Save">
 					</div>
@@ -584,16 +613,16 @@ table.table .avatar {
 	<div id="deleteEmployeeModal" class="modal fade">
 		<div class="modal-dialog">
 			<div class="modal-content">
-				<form>
+				<form method = "post" action="">
 					<div class="modal-header">
 						<h4 class="modal-title">Delete Employee</h4>
 						<button type="button" class="close" data-dismiss="modal"
 							aria-hidden="true">&times;</button>
 					</div>
 					<div class="modal-body">
-						<p>Are you sure you want to delete these Records?</p>
+						<p>Bạn Chắc Chắn Xóa Những Sản Phẩm Đã Chọn?</p>
 						<p class="text-warning">
-							<small>This action cannot be undone.</small>
+							<small>Muốn xem sản phẩm đã xóa hãy click vào danh sách sản phẩm đã xóa</small>
 						</p>
 					</div>
 					<div class="modal-footer">

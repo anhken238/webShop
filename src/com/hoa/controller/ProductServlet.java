@@ -51,12 +51,6 @@ public class ProductServlet extends HttpServlet {
 			throws ServletException, IOException {
 		String action = request.getParameter("action");
 		switch (action) {
-		case "create":
-			createProduct(request, response);
-			break;
-		case "showEditForm":
-			showEditForm(request, response);
-			break;
 		case "delete":
 			try {
 				deleteProduct(request, response);
@@ -108,16 +102,23 @@ public class ProductServlet extends HttpServlet {
 		if (!new Validation().checkNull(action)) {
 			switch (action) {
 			case "create":
-				createProduct(request, response);
+				try {
+					createProduct(request, response);
+				} catch (DBException e2) {
+					e2.printStackTrace();
+				}
 				break;
 			case "edit":
-				showEditForm(request, response);
+				try {
+					editProduct(request, response);
+				} catch (DBException e1) {
+					e1.printStackTrace();
+				}
 				break;
 			case "delete":
 				try {
 					deleteProduct(request, response);
 				} catch (DBException e) {
-					// TODO Auto-generated catch block
 					e.printStackTrace();
 				}
 				break;
@@ -130,8 +131,48 @@ public class ProductServlet extends HttpServlet {
 		}
 	}
 
-	private void showEditForm(HttpServletRequest request, HttpServletResponse response) {
-		String id = request.getParameter("id");
+	private void editProduct(HttpServletRequest request, HttpServletResponse response) throws DBException {
+		Product product = new Product();
+		String path = "product/List.jsp";
+		String code = request.getParameter("code");
+		try {
+			if (new Validation().checkNull(this.iProductService.getProductById(code).getCode())) {
+				RequestDispatcher reqDispatcher = request.getRequestDispatcher(path);
+				request.setAttribute("notificationMess", "Không Tìm Thấy Sản Phẩm Đã Chọn ! Vui Lòng Kiểm Tra Lại.");
+				reqDispatcher.forward(request, response);
+			}
+		} catch (DBException | IOException | ServletException e) {
+			e.printStackTrace();
+			throw new DBException(e);
+		}
+		String name = request.getParameter("name");
+		float price = Float.parseFloat(request.getParameter("price"));
+		int amount = Integer.parseInt(request.getParameter("amount"));
+		String manufacturing_date = request.getParameter("manufacturingDate");
+		String limit_date = request.getParameter("limitDate");
+		String description = request.getParameter("description");
+		int timeWarning = new Validation().checkNull(request.getParameter("timeWarning1")) ? 7
+				: Integer.parseInt(request.getParameter("timeWarning1"));
+//		String image = request.getParameter("image");
+
+		product.setCode(code);
+		product.setName(name);
+		product.setPrice(price);
+		product.setAmount(amount);
+		product.setManufacturingDate(manufacturing_date);
+		product.setLitmiDate(limit_date);
+		product.setDescription(description);
+		product.setStatus(getStatus(manufacturing_date, limit_date, timeWarning));
+		try {
+			List<Product> productList = this.iProductService.edit(product);
+			request.setAttribute("listProduct", productList);
+			RequestDispatcher reqDispatcher = request.getRequestDispatcher(path);
+			request.setAttribute("notificationMess", "Cập nhật sản phẩm thành công");
+			reqDispatcher.forward(request, response);
+		} catch (DBException | ServletException | IOException e) {
+			e.printStackTrace();
+		}
+		
 
 	}
 
@@ -154,10 +195,20 @@ public class ProductServlet extends HttpServlet {
 
 	}
 
-	private void createProduct(HttpServletRequest request, HttpServletResponse response) {
+	private void createProduct(HttpServletRequest request, HttpServletResponse response) throws DBException {
 		Product product = new Product();
 		String path = "product/List.jsp";
 		String code = request.getParameter("code");
+		try {
+			if (new Validation().checkNull(this.iProductService.getProductById(code).getCode())) {
+				RequestDispatcher reqDispatcher = request.getRequestDispatcher(path);
+				request.setAttribute("notificationMess", "MÃ SẢN PHẨM đã tồn tại !");
+				reqDispatcher.forward(request, response);
+			}
+		} catch (DBException | IOException | ServletException e) {
+			e.printStackTrace();
+			throw new DBException(e);
+		}
 		String name = request.getParameter("name");
 		float price = Float.parseFloat(request.getParameter("price"));
 		int amount = Integer.parseInt(request.getParameter("amount"));
@@ -195,7 +246,7 @@ public class ProductServlet extends HttpServlet {
 		DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
 		LocalDate from = LocalDate.parse(start, formatter);
 		LocalDate to = LocalDate.parse(end, formatter);
-		longTime = ChronoUnit.DAYS.between(from,to);
+		longTime = ChronoUnit.DAYS.between(from, to);
 		if (!new Validation().checkNull(end)) {
 			if (longTime > timeWarning) {
 				status = "Bình Thường";

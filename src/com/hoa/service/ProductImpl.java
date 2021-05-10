@@ -138,12 +138,43 @@ public class ProductImpl implements IProductService {
 				}
 				product.setDescription(rs.getString("DESCRIPTION"));
 				product.setStatus(rs.getString("STATUS"));
-			}
+			} 
 		} catch (Exception e) {
 			throw new DBException(e);
 		}
 
 		return product;
+	}
+
+	@Override
+	public List<Product> edit(Product product) throws DBException {
+		List<Product> list = new ArrayList<>();
+		PreparedStatement ps = null;
+		int index = 1;
+		StringBuilder strSql = new StringBuilder();
+		try {
+			strSql.append(" UPDATE PRODUCT   ");
+			strSql.append(" SET NAME= ?, PRICE =?, AMOUNT =?, MANUFACTURING_DATE=?,  ");
+			strSql.append(" LIMIT_DATE=?, DESCRIPTION=?, STATUS = ? ");
+			strSql.append(" WHERE CODE = ?; ");
+			ps = iDataAcessLayer.prepaStatement(strSql);
+			ps.setString(index++, product.getName());
+			ps.setString(index++, String.valueOf((product.getPrice())));
+			ps.setInt(index++, product.getAmount());
+			ps.setString(index++, product.getManufacturingDate());
+			ps.setString(index++, product.getLitmiDate());
+			ps.setString(index++, product.getDescription());
+			ps.setString(index++, product.getStatus());
+			ps.setString(index++, product.getCode());
+			int status = ps.executeUpdate();
+			iDataAcessLayer.commit();
+			if(status > 0) {
+				list = this.getList();
+			}
+		} catch (Exception e) {
+			throw new DBException(e);
+		}
+		return list;
 	}
 
 	@Override

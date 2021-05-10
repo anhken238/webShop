@@ -13,6 +13,9 @@ public interface IProductService {
 
 	public List<Product> deleteById(String id) throws DBException;
 	
+	public List<Product> edit(Product product) throws DBException;
+	
 	public Product getProductById(String id)throws DBException;
 
+	
 }
