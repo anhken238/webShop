@@ -1,9 +1,11 @@
 package com.hoa.model;
 
-import java.math.BigDecimal;
-
 import com.hoa.common.Validation;
-
+/**
+ * Creator NguyenDucAnh
+ * 
+ * 2021/05/08 14:43:56
+ */
 public class Product {
 	String code;
 	String name;

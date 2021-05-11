@@ -1,10 +1,7 @@
 package com.hoa.controller;
 
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
-import java.time.Duration;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
@@ -27,7 +24,9 @@ import com.hoa.service.IProductService;
 import com.hoa.service.ProductImpl;
 
 /**
- * Servlet implementation class ProductServlet
+ * Creator NguyenDucAnh
+ * 
+ * 2021/05/08 13:22:16
  */
 @MultipartConfig()
 @WebServlet(name = "ProductServlet", urlPatterns = { "/Products" })
@@ -117,7 +116,7 @@ public class ProductServlet extends HttpServlet {
 				break;
 			case "delete":
 				try {
-					deleteProduct(request, response);
+					deleteMultiplesProduct(request, response);
 				} catch (DBException e) {
 					e.printStackTrace();
 				}
@@ -131,15 +130,64 @@ public class ProductServlet extends HttpServlet {
 		}
 	}
 
+	/**
+	 * @param request
+	 * @param response
+	 * @throws DBException
+	 * @throws IOException
+	 * @throws ServletException
+	 */
+	private void deleteMultiplesProduct(HttpServletRequest request, HttpServletResponse response)
+			throws DBException, ServletException, IOException {
+		String ids = request.getParameter("ids");
+		String path = "product/List.jsp";
+		if (new Validation().checkNull(ids)) {
+			RequestDispatcher reqDispatcher = request.getRequestDispatcher(path);
+			request.setAttribute("notificationMess", "Không Tìm Thấy Sản Phẩm Đã Chọn ! Vui Lòng Kiểm Tra Lại.");
+			try {
+				reqDispatcher.forward(request, response);
+				return;
+			} catch (ServletException | IOException e) {
+				e.printStackTrace();
+			}
+		}
+		StringBuilder idList = this.handleIds(ids);
+		List<Product> productList = this.iProductService.deleteMultiplesProducts(idList);
+		request.setAttribute("listProduct", productList);
+		RequestDispatcher reqDispatcher = request.getRequestDispatcher(path);
+		request.setAttribute("notificationMess", "Xóa sản phẩm thành công");
+		reqDispatcher.forward(request, response);
+		return;
+	}
+
+	private StringBuilder handleIds(String ids) {
+		String[] idArray = ids.split(",");
+		StringBuilder idList = new StringBuilder();
+		for (int i = 0; i < idArray.length; i++) {
+			if (i == idArray.length - 1) {
+				idList.append(" '");
+				idList.append(idArray[i]);
+				idList.append("' ");
+				break;
+			}
+			idList.append(" '");
+			idList.append(idArray[i]);
+			idList.append("', ");
+		}
+		return idList;
+	}
+
 	private void editProduct(HttpServletRequest request, HttpServletResponse response) throws DBException {
 		Product product = new Product();
 		String path = "product/List.jsp";
 		String code = request.getParameter("code");
 		try {
 			if (new Validation().checkNull(this.iProductService.getProductById(code).getCode())) {
+				response.setContentType("text/html;charset=UTF-8");
 				RequestDispatcher reqDispatcher = request.getRequestDispatcher(path);
 				request.setAttribute("notificationMess", "Không Tìm Thấy Sản Phẩm Đã Chọn ! Vui Lòng Kiểm Tra Lại.");
 				reqDispatcher.forward(request, response);
+				return;
 			}
 		} catch (DBException | IOException | ServletException e) {
 			e.printStackTrace();
@@ -166,13 +214,14 @@ public class ProductServlet extends HttpServlet {
 		try {
 			List<Product> productList = this.iProductService.edit(product);
 			request.setAttribute("listProduct", productList);
+			response.setContentType("text/html;charset=UTF-8");
 			RequestDispatcher reqDispatcher = request.getRequestDispatcher(path);
 			request.setAttribute("notificationMess", "Cập nhật sản phẩm thành công");
 			reqDispatcher.forward(request, response);
+			return;
 		} catch (DBException | ServletException | IOException e) {
 			e.printStackTrace();
 		}
-		
 
 	}
 
@@ -185,8 +234,10 @@ public class ProductServlet extends HttpServlet {
 			try {
 				List<Product> productList = (List<Product>) this.iProductService.deleteById(id);
 				request.setAttribute("listProduct", productList);
+				response.setContentType("text/html;charset=UTF-8");
 				RequestDispatcher rqDispatcher = request.getRequestDispatcher(path);
 				rqDispatcher.forward(request, response);
+				return;
 			} catch (DBException e) {
 				e.printStackTrace();
 				throw new DBException(e);
@@ -195,15 +246,17 @@ public class ProductServlet extends HttpServlet {
 
 	}
 
-	private void createProduct(HttpServletRequest request, HttpServletResponse response) throws DBException {
+	private void createProduct(HttpServletRequest request, HttpServletResponse response) throws DBException, ServletException, IOException {
 		Product product = new Product();
 		String path = "product/List.jsp";
 		String code = request.getParameter("code");
 		try {
 			if (new Validation().checkNull(this.iProductService.getProductById(code).getCode())) {
+				response.setContentType("text/html;charset=UTF-8");
 				RequestDispatcher reqDispatcher = request.getRequestDispatcher(path);
 				request.setAttribute("notificationMess", "MÃ SẢN PHẨM đã tồn tại !");
 				reqDispatcher.forward(request, response);
+				return;
 			}
 		} catch (DBException | IOException | ServletException e) {
 			e.printStackTrace();
@@ -228,16 +281,13 @@ public class ProductServlet extends HttpServlet {
 		product.setDescription(description);
 		product.setStatus(getStatus(manufacturing_date, limit_date, timeWarning));
 //		product.setImage(image);
-		try {
-			List<Product> productList = this.iProductService.create(product);
-			request.setAttribute("listProduct", productList);
-			RequestDispatcher reqDispatcher = request.getRequestDispatcher(path);
-			request.setAttribute("notificationMess", "Tạo sản phẩm thành công");
-			reqDispatcher.forward(request, response);
-		} catch (DBException | ServletException | IOException e) {
-			e.printStackTrace();
-		}
-
+		response.setContentType("text/html;charset=UTF-8");
+		List<Product> productList = this.iProductService.create(product);
+		request.setAttribute("listProduct", productList);
+		RequestDispatcher reqDispatcher = request.getRequestDispatcher(path);
+		request.setAttribute("notificationMess", "Tạo sản phẩm thành công");
+		reqDispatcher.forward(request, response);
+		return;
 	}
 
 	private String getStatus(String start, String end, int timeWarning) {

@@ -8,7 +8,11 @@ import java.sql.SQLException;
 import com.hoa.dao.DataAccessImpl;
 import com.hoa.dao.IDataAcessLayer;
 import com.hoa.exception.DBException;
-
+/**
+ * Creator NguyenDucAnh
+ * 
+ * 2021/05/08 15:46:56
+ */
 public class User {
 	 static IDataAcessLayer iDataAcessLayer = new DataAccessImpl();
 

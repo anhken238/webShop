@@ -1,5 +1,6 @@
 package com.hoa.service;
 
+import java.io.IOException;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -14,6 +15,11 @@ import com.hoa.dao.IDataAcessLayer;
 import com.hoa.exception.DBException;
 import com.hoa.model.Product;
 
+/**
+ * Creator NguyenDucAnh
+ * 
+ * 2021/05/08 15:40:29
+ */
 public class ProductImpl implements IProductService {
 
 	IDataAcessLayer iDataAcessLayer = new DataAccessImpl();
@@ -64,6 +70,12 @@ public class ProductImpl implements IProductService {
 					throw new DBException(e);
 				}
 			}
+			try {
+				iDataAcessLayer.closeConn();
+			} catch (IOException | SQLException e) {
+				e.printStackTrace();
+				throw new DBException(e);
+			}
 		}
 		return list;
 	}
@@ -105,6 +117,12 @@ public class ProductImpl implements IProductService {
 					throw new DBException(e);
 				}
 			}
+			try {
+				iDataAcessLayer.closeConn();
+			} catch (IOException | SQLException e) {
+				e.printStackTrace();
+				throw new DBException(e);
+			}
 		}
 	}
 
@@ -138,9 +156,23 @@ public class ProductImpl implements IProductService {
 				}
 				product.setDescription(rs.getString("DESCRIPTION"));
 				product.setStatus(rs.getString("STATUS"));
-			} 
+			}
 		} catch (Exception e) {
 			throw new DBException(e);
+		} finally {
+			if (ps != null) {
+				try {
+					ps.close();
+				} catch (SQLException e) {
+					throw new DBException(e);
+				}
+			}
+			try {
+				iDataAcessLayer.closeConn();
+			} catch (IOException | SQLException e) {
+				e.printStackTrace();
+				throw new DBException(e);
+			}
 		}
 
 		return product;
@@ -168,11 +200,25 @@ public class ProductImpl implements IProductService {
 			ps.setString(index++, product.getCode());
 			int status = ps.executeUpdate();
 			iDataAcessLayer.commit();
-			if(status > 0) {
+			if (status > 0) {
 				list = this.getList();
 			}
 		} catch (Exception e) {
 			throw new DBException(e);
+		} finally {
+			if (ps != null) {
+				try {
+					ps.close();
+				} catch (SQLException e) {
+					throw new DBException(e);
+				}
+			}
+			try {
+				iDataAcessLayer.closeConn();
+			} catch (IOException | SQLException e) {
+				e.printStackTrace();
+				throw new DBException(e);
+			}
 		}
 		return list;
 	}
@@ -209,6 +255,20 @@ public class ProductImpl implements IProductService {
 			}
 		} catch (Exception e) {
 			throw new DBException(e);
+		} finally {
+			if (ps != null) {
+				try {
+					ps.close();
+				} catch (SQLException e) {
+					throw new DBException(e);
+				}
+			}
+			try {
+				iDataAcessLayer.closeConn();
+			} catch (IOException | SQLException e) {
+				e.printStackTrace();
+				throw new DBException(e);
+			}
 		}
 
 		return productList;
@@ -233,6 +293,58 @@ public class ProductImpl implements IProductService {
 			}
 		} catch (Exception e) {
 			throw new DBException(e);
+		} finally {
+			if (ps != null) {
+				try {
+					ps.close();
+				} catch (SQLException e) {
+					throw new DBException(e);
+				}
+			}
+			try {
+				iDataAcessLayer.closeConn();
+			} catch (IOException | SQLException e) {
+				e.printStackTrace();
+				throw new DBException(e);
+			}
+		}
+		return list;
+	}
+
+	@Override
+	public List<Product> deleteMultiplesProducts(StringBuilder ids) throws DBException {
+		List<Product> list = new ArrayList<Product>();
+		PreparedStatement ps = null;
+		StringBuilder strSql = new StringBuilder();
+		try {
+			strSql.append(" DELETE   ");
+			strSql.append(" FROM       ");
+			strSql.append(" PRODUCT  ");
+			strSql.append(" WHERE CODE IN (");
+			strSql.append(ids);
+			strSql.append("); ");
+			ps = iDataAcessLayer.prepaStatement(strSql);
+			int status = ps.executeUpdate();
+			iDataAcessLayer.commit();
+			if (status > 0) {
+				list = this.getList();
+			}
+		} catch (Exception e) {
+			throw new DBException(e);
+		} finally {
+			if (ps != null) {
+				try {
+					ps.close();
+				} catch (SQLException e) {
+					e.printStackTrace();
+				}
+			}
+			try {
+				iDataAcessLayer.closeConn();
+			} catch (IOException | SQLException e) {
+				e.printStackTrace();
+				throw new DBException(e);
+			}
 		}
 		return list;
 	}

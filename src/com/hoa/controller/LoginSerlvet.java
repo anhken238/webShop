@@ -11,7 +11,9 @@ import javax.servlet.http.HttpServletResponse;
 import com.hoa.common.Validation;
 
 /**
- * Servlet implementation class LoginSerlvet
+ * Creator NguyenDucAnh
+ * 
+ * 2021/05/08 13:25:16
  */
 @WebServlet("/LoginSerlvet")
 public class LoginSerlvet extends HttpServlet {

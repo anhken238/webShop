@@ -1,16 +1,20 @@
 package com.hoa.dao;
 
-import java.io.*;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.Properties;
 
-import org.apache.tomcat.jni.File;
-
 import com.hoa.exception.DBException;
-
+/**
+ * Creator NguyenDucAnh
+ * 
+ * 2021/05/08 13:33:56
+ */
 public class DataAccessImpl implements IDataAcessLayer {
 	static Connection conn = null;
 
@@ -58,6 +62,16 @@ public class DataAccessImpl implements IDataAcessLayer {
 			} catch (SQLException e) {
 				throw new DBException(e);
 			}
+		}
+	}
+
+
+
+	@Override
+	public void closeConn() throws IOException, DBException, SQLException {
+		Connection conn = getConnect();
+		if(conn != null) {
+			conn.close();
 		}
 	}
 

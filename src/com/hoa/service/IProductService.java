@@ -4,7 +4,11 @@ import java.util.List;
 
 import com.hoa.exception.DBException;
 import com.hoa.model.Product;
-
+/**
+ * Creator NguyenDucAnh
+ * 
+ * 2021/05/08 15:50:22
+ */
 public interface IProductService {
 
 	public List<Product> create(Product product) throws DBException;
@@ -15,7 +19,8 @@ public interface IProductService {
 	
 	public List<Product> edit(Product product) throws DBException;
 	
+	public List<Product> deleteMultiplesProducts(StringBuilder ids) throws DBException;
+	
 	public Product getProductById(String id)throws DBException;
-
 	
 }

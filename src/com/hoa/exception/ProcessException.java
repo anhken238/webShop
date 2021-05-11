@@ -1,5 +1,9 @@
 package com.hoa.exception;
-
+/**
+ * Creator NguyenDucAnh
+ * 
+ * 2021/05/08 14:46:56
+ */
 public class ProcessException extends RuntimeException {
 
 	/**

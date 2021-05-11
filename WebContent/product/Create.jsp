@@ -25,6 +25,9 @@
 </head>
 
 <body>
+
+<h2><a href="${pageContext.request.contextPath}/Products?action=showlist">list</a></h2>
+<%-- 
 	<div class="container">
 		<form method="POST" action="<%=request.getContextPath()%>/Products?action=create" enctype="multipart/form-data"
 			style="margin: auto;">
@@ -64,7 +67,7 @@
 			<button type="submit" class="btn btn-primary" class="form-control">Thêm
 				Sản Phẩm</button>
 		</form>
-	</div>
+	</div> --%>
 </body>
 <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
 <script>window.jQuery || document.write('<script src="js/jquery-1.10.2.min.js"><\/script>')</script>

@@ -1,5 +1,9 @@
 package com.hoa.exception;
-
+/**
+ * Creator NguyenDucAnh
+ * 
+ * 2021/05/08 13:55:12
+ */
 public class DBException extends Exception {
 
 	/**
