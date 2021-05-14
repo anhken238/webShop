@@ -5,6 +5,7 @@
 <html>
 <head>
 <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>MANAGE PRODUCT</title>
@@ -285,8 +286,94 @@ table.table .avatar {
 .modal form label {
 	font-weight: normal;
 }
+
+#notificaption {
+	float: right;
+	margin: 55px 150px 0px 0px;
+	padding: 8px;
+	color: #f5f5f5;
+	width: 200px;
+	height: 55px;
+	border-radius: 3px;
+}
+
+.spanNotif {
+	text-align: left;
+	word-wrap: break-all;
+}
+
+#btnclose {
+	float: right;
+	width: 1px;
+	height: 1px;
+	font-weight: bold;
+}
+.active {
+    color:red;
+}
 </style>
 <script type="text/javascript">
+	// show/hide time warning of product
+	$(document).ready(function() {
+		var patternDate = $("#limitDateAdd").val();
+		$("#textWarningAdd").hide();
+		$("#limitDateAdd").change(function() {
+			$("#textWarningAdd").show();
+			if ($("#limitDateAdd").val() === patternDate) {
+				$("#textWarningAdd").hide();
+			}
+		});
+	});
+	$(document).ready(function() {
+		var patternDate = $("#limitDateEdit").val();
+		$("#textWarningEdit").hide();
+		$("#limitDateEdit").change(function() {
+			$("#textWarningEdit").show();
+			if ($("#limitDateEdit").val() === patternDate) {
+				$("#textWarningEdit").hide();
+			}
+		});
+	});
+
+	// save data when click button add product
+	function saveData() {
+		var $a = $('#formAdd :input');
+		$a.each(function() {
+			localStorage.setItem(this.name, $(this).val());
+		})
+	}
+
+	$(document).ready(
+			function() {
+				console.log($('#errorCreateMess').val());
+				var mesesager = $('#errorCreateMess').val();
+				if (mesesager == 'null' || mesesager == '') {
+					$('#errorCreateMess').attr('type', 'hidden');
+				} else {
+					$('#addEmployeeModal').modal('show');
+					$('#errorCreateMess').attr('type', 'text');
+					/* var $a = $('#formAdd :input');
+					$a.each(function() {
+						$(this).val(localStorage.getItem(this.name));
+					}) */
+					$("#nameAdd").val(localStorage.getItem('name'));
+					$("#priceAdd").val(localStorage.getItem('price'));
+					$("#codeAdd").val(localStorage.getItem('code'));
+					$("#amountAdd").val(localStorage.getItem('amount'));
+					$("#descriptionAdd").val(
+							localStorage.getItem('description'));
+					$("#manufacturingDateAdd").val(
+							localStorage.getItem('manufacturingDate'));
+					$("#limitDateAdd").val(localStorage.getItem('limitDate'));
+					$("#valueTimeWarning").val(
+							localStorage.getItem('timeWarningAdd'));
+					$("#textWarningAdd").show();
+
+				}
+
+			});
+
+	//event ONCLICK of checkbox select all
 	function getValCheckBox(e) {
 		var ids = [];
 		var countCheckboxPick = 0;
@@ -313,6 +400,7 @@ table.table .avatar {
 		}
 	}
 
+	// event ONCLICK of checkbox product
 	function getValCheckBoxAll(e) {
 		var ids = [];
 		// Select/Deselect checkboxes
@@ -339,43 +427,26 @@ table.table .avatar {
 		}
 	}
 
-	$(document).ready(function() {
-		var patternDate = $("#limitDate1").val();
-		$("#textWarning1").hide();
-		$("#limitDate1").change(function() {
-			$("#textWarning1").show();
-			if ($("#limitDate1").val() === patternDate) {
-				$("#textWarning1").hide();
-			}
-		});
-	});
-	$(document).ready(function() {
-		var patternDate = $("#limitDate2").val();
-		$("#textWarning2").hide();
-		$("#limitDate2").change(function() {
-			$("#textWarning2").show();
-			if ($("#limitDate2").val() === patternDate) {
-				$("#textWarning2").hide();
-			}
-		});
-	});
-
+	//get row data from table then show in edit form
 	function updateFunction(e) {
 		var elem = $(e.target);
 		var parentRow = elem.parents('tr');
 		/*   $("#row_name").val(parentRow.find("[name='name']").text()); */
-		$("#name").val(parentRow.find("[name='name']").text());
-		$("#price").val(parentRow.find("[name='price']").text());
-		$("#code").val(parentRow.find("[name='code']").text());
-		$("#amount").val(parentRow.find("[name='amount']").text());
-		$("#description").val(parentRow.find("[name='description']").text());
+		$("#nameEdit").val(parentRow.find("[name='name']").text());
+		$("#priceEdit").val(parentRow.find("[name='price']").text());
+		$("#codeEdit").val(parentRow.find("[name='code']").text());
+		$("#amountEdit").val(parentRow.find("[name='amount']").text());
+		$("#descriptionEdit")
+				.val(parentRow.find("[name='description']").text());
 		/*dd-mm-yy -> mm-dd-yy*/
 		var date = formatDate(parentRow.find("[name='manufacturingDate']")
 				.text());
-		$("#manufacturingDate").val(date);
+		$("#manufacturingDateEdit").val(date);
 
 		var date = formatDate(parentRow.find("[name='limitDate']").text());
-		$("#limitDate2").val(date);
+		$("#limitDateEdit").val(date);
+		$("#timeWarningAdd").val(
+				parentRow.find("[name='timeWarningAdd']").text());
 		//considering you saved the values are male and female in db
 		/*  
 		if (parentRow.find("[name='gender']").text() == 'male') {
@@ -403,9 +474,49 @@ table.table .avatar {
 
 		return [ year, month, day ].join('-');
 	}
+	$(document).ready(
+			function() {
+				var type = $('#typeError').val();
+				var messError = $('#errNotification').val();
+				var messSuccess = $('#successNotification').val();
+				if (type == 'null' || type == '') {
+					$("#notificaption").hide();
+				} else {
+					if (type == 'OK') {
+						$("#notificaption").show().slideUp(3000);
+						$("#errNotification").hide();
+						$("#notificaption").attr('style',
+								'background-color: #5cb85c;');
+					} else if (type == 'ERROR') {
+						$("#notificaption").show().slideUp(3000);
+						$("#successNotification").hide();
+						$("#notificaption").attr('style',
+								'background-color: #d9534f;');
+					}
+				}
+			})
+
+	$(document).ready(function() {
+		$("#btnclose").click(function() {
+			$("#notificaption").hide();
+		});
+	})
+	function active(e){
+		var pageNow  = $('#pageNow').val();
+		var idPageClick = '#pageItem' + pageNow;
+		var a = $(idPageClick).val();
+		
+	}
 </script>
 </head>
 <body>
+	<input type="hidden" value=<%=request.getAttribute("type")%>
+		id="typeError">
+	<div id="notificaption" style="background-color: green;">
+		<button id="btnclose" data-dismiss="notificaption" type="button">&times;</button>
+		<span class="spanNotif" id="errNotification"><%=request.getAttribute("errNotification")%></span>
+		<span class="spanNotif" id="successNotification"><%=request.getAttribute("successNotification")%></span>
+	</div>
 	<div class="container">
 		<h2 Style="margin-bottom: 2%">
 			<a href="${pageContext.request.contextPath}/Products?action=showlist">Manage
@@ -418,7 +529,7 @@ table.table .avatar {
 					<div class="col-sm-6">
 
 						<div class="row">
-							<div class="col-sm-8">
+							<div class="col-sm-6">
 								<div class="input-group">
 									<div class="input-group-btn search-panel">
 										<button type="button" class="btn btn-default dropdown-toggle"
@@ -509,27 +620,49 @@ table.table .avatar {
 			</table>
 			<div class="clearfix">
 				<div class="hint-text">
-					Showing <b>5</b> out of <b>25</b> entries
+					Showing <b> <select>
+							<option value="5">5</option>
+							<option value="10">10</option>
+							<option value="15">15</option>
+					</select>
+					</b> out of <b><%=request.getAttribute("totalRecord")%></b> entries
 				</div>
+				<%
+					int total = Integer.parseInt(String.valueOf(request.getAttribute("totalRecord")));
+					int length = Integer.parseInt(String.valueOf(request.getAttribute("totalPage")));
+					int pageNow = Integer.parseInt(String.valueOf(request.getAttribute("pageNow")));
+				%>
+				<input type ="hidden" id="pageNow" value="<%=pageNow%>">
 				<ul class="pagination">
-					<li class="page-item disabled"><a href="#">Previous</a></li>
-					<li class="page-item"><a href="#" class="page-link">1</a></li>
-					<li class="page-item"><a href="#" class="page-link">2</a></li>
-					<li class="page-item active"><a href="#" class="page-link">3</a></li>
-					<li class="page-item"><a href="#" class="page-link">4</a></li>
-					<li class="page-item"><a href="#" class="page-link">5</a></li>
-					<li class="page-item"><a href="#" class="page-link">Next</a></li>
+					<li class="page-item"><a
+						href="${pageContext.request.contextPath}/Products?action=showlist&pageNo=<%=pageNow-1%>&pageSize=5">Previous</a></li>
+					<%
+						for (int i = 1; i <= length; i++) {
+					%>
+					<li class="page-item" id="pageItem<%=i%>" onclick="active(event);"><a
+						href="${pageContext.request.contextPath}/Products?action=showlist&pageNo=<%=i%>&pageSize=5"
+						class="page-link"><%=i%></a></li>
+					<%
+						}
+					%>
+					<li class="page-item"><a
+						href="${pageContext.request.contextPath}/Products?action=showlist&pageNo=<%=pageNow+1%>&pageSize=5"
+						class="page-link">Next</a></li>
 				</ul>
 			</div>
 		</div>
 	</div>
-	<!-- Edit Modal HTML -->
+	<!-- add Modal HTML -->
 	<div id="addEmployeeModal" class="modal fade">
 		<div class="modal-dialog">
 			<div class="modal-content">
-				<form
+				<form id="formAdd"
 					action="${pageContext.request.contextPath}/Products?action=create"
-					method="post">
+					method="post" onsubmit="return saveData();">
+					<input style="margin-top: 10px; margin-left: 10px; color: red;"
+						type="hidden" id="errorCreateMess" class="errorCreateMess"
+						value="<%=request.getAttribute("errCreateNotification")%>"
+						disabled>
 					<div class="modal-header">
 						<h4 class="modal-title">Add Product</h4>
 						<button type="button" class="close" data-dismiss="modal"
@@ -537,40 +670,43 @@ table.table .avatar {
 					</div>
 					<div class="modal-body">
 						<div class="form-group">
-							<label>Mã Sản Phẩm</label> <input type="text"
+							<label>Mã Sản Phẩm</label> <input type="text" id="codeAdd"
 								class="form-control" name="code" required>
 						</div>
 						<div class="form-group">
-							<label>Tên Sản Phẩm</label> <input type="text"
+							<label>Tên Sản Phẩm</label> <input type="text" id="nameAdd"
 								class="form-control" name="name" required>
 						</div>
 						<div class="form-group">
 							<label>Đơn Giá</label> <input class="form-control" type="number"
-								name="price" min="0.00" max="1000000000000.00" step="0.01"
-								required />
+								id="priceAdd" name="price" min="0.00" max="1000000000000.00"
+								step="0.01" required />
 						</div>
 						<div class="form-group">
 							<label>Số Lượng</label> <input type="number" min="0"
-								max="1000000000000" class="form-control" name="amount" required>
+								id="amountAdd" max="1000000" class="form-control" name="amount"
+								required>
 						</div>
 						<div class="form-group">
 							<label>Ngày Sản Xuất</label> <input type="Date"
-								class="form-control" name="manufacturingDate" required>
+								class="form-control" name="manufacturingDate"
+								id="manufacturingDateAdd" required>
 						</div>
 						<div class="form-group">
-							<label>Ngày Hết Hạn</label> <input id="limitDate1" type="DATE"
+							<label>Ngày Hết Hạn</label> <input id="limitDateAdd" type="DATE"
 								class="form-control" name="limitDate" required>
 						</div>
-						<div class="form-group" id="textWarning1">
+						<div class="form-group" id="textWarningAdd">
 							<span style="color: red; margin-top: 5px;">Sẽ cảnh báo
 								trước <input style="width: 15%; height: 70%;" type="number"
-								placeholder="day" name="timeWarning1"> ngày khi sản phẩm
-								hết hạn
+								id="valueTimeWarning" placeholder="day" name="timeWarningAdd">
+								ngày khi sản phẩm hết hạn
 							</span>
 						</div>
 						<div class="form-group">
 							<label>Mô Tả Sản Phẩm</label>
-							<textarea class="form-control" name="description" required></textarea>
+							<textarea class="form-control" name="description"
+								id="descriptionAdd" required></textarea>
 						</div>
 					</div>
 					<div class="modal-footer">
@@ -596,41 +732,42 @@ table.table .avatar {
 					</div>
 					<div class="modal-body">
 						<div class="form-group">
-							<label>Mã Sản Phẩm</label> <input type="text" id="code"
+							<label>Mã Sản Phẩm</label> <input type="text" id="codeEdit"
 								name="code" class="form-control" required>
 						</div>
 						<div class="form-group">
-							<label>Tên Sản Phẩm</label> <input type="text" id="name"
+							<label>Tên Sản Phẩm</label> <input type="text" id="nameEdit"
 								name="name" class="form-control" required>
 						</div>
 						<div class="form-group">
 							<label>Đơn Giá</label> <input class="form-control" type="number"
-								id="price" name="price" min="0.00" max="1000000000000.00"
+								id="priceEdit" name="price" min="0.00" max="1000000000000.00"
 								step="0.01" required />
 						</div>
 						<div class="form-group">
-							<label>Số Lượng</label> <input type="number" min="0" id="amount"
-								name="amount" max="1000000000000" class="form-control" required>
+							<label>Số Lượng</label> <input type="number" min="0"
+								id="amountEdit" name="amount" max="1000000" class="form-control"
+								required>
 						</div>
 						<div class="form-group">
 							<label>Ngày Sản Xuất</label> <input type="Date"
-								id="manufacturingDate" name="manufacturingDate"
+								id="manufacturingDateEdit" name="manufacturingDate"
 								class="form-control" required>
 						</div>
 						<div class="form-group">
-							<label>Ngày Hết Hạn</label> <input id="limitDate2"
+							<label>Ngày Hết Hạn</label> <input id="limitDateEdit"
 								name="limitDate" type="DATE" class="form-control" required>
 						</div>
-						<div class="form-group" id="textWarning2">
+						<div class="form-group" id="textWarningEdit">
 							<span style="color: red; margin-top: 5px;">Sẽ cảnh báo
 								trước <input style="width: 15%; height: 70%;" type="number"
-								placeholder="day" name="timeWarning2"> ngày khi sản phẩm
-								hết hạn
+								placeholder="day" name="timeWarningEdit"> ngày khi sản
+								phẩm hết hạn
 							</span>
 						</div>
 						<div class="form-group">
 							<label>Mô Tả Sản Phẩm</label>
-							<textarea class="form-control" id="description"
+							<textarea class="form-control" id="descriptionEdit"
 								name="description" required></textarea>
 						</div>
 					</div>
@@ -647,9 +784,10 @@ table.table .avatar {
 	<div id="deleteEmployeeModal" class="modal fade">
 		<div class="modal-dialog">
 			<div class="modal-content">
-				<form method="post" action="${pageContext.request.contextPath}/Products?action=delete">
+				<form method="post"
+					action="${pageContext.request.contextPath}/Products?action=delete">
 					<div>
-						<input type="text" name="ids" id="ids">
+						<input type="hidden" name="ids" id="ids">
 					</div>
 					<div class="modal-header">
 						<h4 class="modal-title">Xóa Các Sản Phẩm !</h4>

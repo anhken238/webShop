@@ -96,7 +96,7 @@ public class ProductImpl implements IProductService {
 			ps.setString(index++, product.getPath());
 
 			int status = ps.executeUpdate();
-			if (!new Validation().checkNull(product.getImage())) {
+			if (!new Validation().isNull(product.getImage())) {
 				createFileOfProduct(product);
 			}
 			if (status > 0) {
@@ -179,16 +179,23 @@ public class ProductImpl implements IProductService {
 	}
 
 	@Override
-	public List<Product> edit(Product product) throws DBException {
+	public List<Product> edit(Product product, Boolean checkFlg) throws DBException {
 		List<Product> list = new ArrayList<>();
 		PreparedStatement ps = null;
 		int index = 1;
 		StringBuilder strSql = new StringBuilder();
 		try {
-			strSql.append(" UPDATE PRODUCT   ");
-			strSql.append(" SET NAME= ?, PRICE =?, AMOUNT =?, MANUFACTURING_DATE=?,  ");
-			strSql.append(" LIMIT_DATE=?, DESCRIPTION=?, STATUS = ? ");
-			strSql.append(" WHERE CODE = ?; ");
+			if (checkFlg) {
+				strSql.append(" UPDATE PRODUCT   ");
+				strSql.append(" SET NAME= ?, PRICE =?, AMOUNT =?, MANUFACTURING_DATE=?,  ");
+				strSql.append(" LIMIT_DATE=?, DESCRIPTION=?, STATUS = ? ");
+				strSql.append(" WHERE CODE = ?; ");
+			} else {
+				strSql.append(" UPDATE PRODUCT   ");
+				strSql.append(" SET NAME= ?, PRICE =?, AMOUNT =?, MANUFACTURING_DATE=?,  ");
+				strSql.append(" LIMIT_DATE=?, DESCRIPTION=? ");
+				strSql.append(" WHERE CODE = ?; ");
+			}
 			ps = iDataAcessLayer.prepaStatement(strSql);
 			ps.setString(index++, product.getName());
 			ps.setString(index++, String.valueOf((product.getPrice())));
@@ -196,7 +203,9 @@ public class ProductImpl implements IProductService {
 			ps.setString(index++, product.getManufacturingDate());
 			ps.setString(index++, product.getLitmiDate());
 			ps.setString(index++, product.getDescription());
-			ps.setString(index++, product.getStatus());
+			if (checkFlg) {
+				ps.setString(index++, product.getStatus());
+			}
 			ps.setString(index++, product.getCode());
 			int status = ps.executeUpdate();
 			iDataAcessLayer.commit();
@@ -224,7 +233,43 @@ public class ProductImpl implements IProductService {
 	}
 
 	@Override
-	public List<Product> getList() throws DBException {
+	public int getTotalRecord() throws DBException {
+		int count = 0;
+		PreparedStatement ps = null;
+		ResultSet rs = null;
+		StringBuilder strSql = new StringBuilder();
+		try {
+			strSql.append(" SELECT COUNT(*) AS CNT   ");
+			strSql.append(" FROM       ");
+			strSql.append(" PRODUCT ;  ");
+			ps = iDataAcessLayer.prepaStatement(strSql);
+			rs = ps.executeQuery();
+			if (rs.next()) {
+				count = rs.getInt("CNT");
+			}
+		} catch (Exception e) {
+			throw new DBException(e);
+		} finally {
+			if (ps != null) {
+				try {
+					ps.close();
+				} catch (SQLException e) {
+					throw new DBException(e);
+				}
+			}
+			try {
+				iDataAcessLayer.closeConn();
+			} catch (IOException | SQLException e) {
+				e.printStackTrace();
+				throw new DBException(e);
+			}
+		}
+
+		return count;
+	}
+
+	@Override
+	public List<Product> getList(int pageNo, int pageSize) throws DBException {
 		List<Product> productList = new ArrayList<>();
 		PreparedStatement ps = null;
 		ResultSet rs = null;
@@ -232,8 +277,12 @@ public class ProductImpl implements IProductService {
 		try {
 			strSql.append(" SELECT *   ");
 			strSql.append(" FROM       ");
-			strSql.append(" PRODUCT ;  ");
+			strSql.append(" PRODUCT   ");
+			strSql.append(" LIMIT ?   ");
+			strSql.append(" OFFSET ? ;  ");
 			ps = iDataAcessLayer.prepaStatement(strSql);
+			ps.setInt(1, pageSize);
+			ps.setInt(2, pageNo);
 			rs = ps.executeQuery();
 			while (rs.next()) {
 				Product product = new Product();

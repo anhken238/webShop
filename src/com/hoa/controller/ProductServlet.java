@@ -59,28 +59,50 @@ public class ProductServlet extends HttpServlet {
 			}
 			break;
 		default:
-			showListProduct(request, response);
+			try {
+				showListProduct(request, response);
+			} catch (DBException e) {
+				e.printStackTrace();
+			}
 			break;
 		}
 	}
 
-	private void showListProduct(HttpServletRequest request, HttpServletResponse response) {
+	private void showListProduct(HttpServletRequest request, HttpServletResponse response) throws DBException {
+		int pageSize = 5, pageNo = 0;
+		int pageNow = 1;
 		String notificationMess = "";
+		if (!new Validation().isNull(request.getParameter("pageNo"))
+				&& !new Validation().isNull(request.getParameter("pageSize"))) {
+			pageSize = Integer.parseInt(request.getParameter("pageSize"));
+			if(Integer.parseInt(request.getParameter("pageNo")) <= 1) {
+				pageNo = 0;
+			}else{
+				pageNo = Integer.parseInt(request.getParameter("pageNo"))*5 - 5;
+				pageNow = Integer.parseInt(request.getParameter("pageNo"));
+			}
+		}
+		int count = 0;
+		count = this.iProductService.getTotalRecord();
 		String path = "product/List.jsp";
 		List<Product> productList = new ArrayList<Product>();
 		try {
-			productList = this.iProductService.getList();
+			productList = this.iProductService.getList(pageNo, pageSize);
+
 		} catch (DBException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			throw new DBException(e);
 		}
 		if (productList.size() > 0) {
-			notificationMess = "Danh Sách Sản Phẩm Có Trong Kho !";
+			notificationMess = "Danh Sách Sản Phẩm Có Trong Kho.";
 		} else {
-			notificationMess = "Hiện Không Có Sản Phẩm Nào Trong Kho";
+			notificationMess = "Hiện Không Có Sản Phẩm Nào Trong Kho !";
 		}
 		RequestDispatcher rq = request.getRequestDispatcher(path);
+		int pageTotal = (int) Math.ceil(((double) count / (double) pageSize));
 		request.setAttribute("listProduct", productList);
+		request.setAttribute("totalRecord", count);
+		request.setAttribute("totalPage", pageTotal);
+		request.setAttribute("pageNow", pageNow);
 		request.setAttribute("notificationMess", notificationMess);
 		try {
 			rq.forward(request, response);
@@ -98,7 +120,7 @@ public class ProductServlet extends HttpServlet {
 	protected void doPost(HttpServletRequest request, HttpServletResponse response)
 			throws ServletException, IOException {
 		String action = request.getParameter("action");
-		if (!new Validation().checkNull(action)) {
+		if (!new Validation().isNull(action)) {
 			switch (action) {
 			case "create":
 				try {
@@ -141,9 +163,11 @@ public class ProductServlet extends HttpServlet {
 			throws DBException, ServletException, IOException {
 		String ids = request.getParameter("ids");
 		String path = "product/List.jsp";
-		if (new Validation().checkNull(ids)) {
+		if (new Validation().isNull(ids)) {
+			List<Product> productList = (List<Product>) this.iProductService.getList(0, 5);
+			request.setAttribute("listProduct", productList);
 			RequestDispatcher reqDispatcher = request.getRequestDispatcher(path);
-			request.setAttribute("notificationMess", "Không Tìm Thấy Sản Phẩm Đã Chọn ! Vui Lòng Kiểm Tra Lại.");
+			request.setAttribute("deleteNotification", "Không Tìm Thấy Sản Phẩm Đã Chọn ! Vui Lòng Kiểm Tra Lại.");
 			try {
 				reqDispatcher.forward(request, response);
 				return;
@@ -180,12 +204,21 @@ public class ProductServlet extends HttpServlet {
 	private void editProduct(HttpServletRequest request, HttpServletResponse response) throws DBException {
 		Product product = new Product();
 		String path = "product/List.jsp";
+		String status = "", limitDateDB = "", manufacturing_dateDB = "";
+		boolean checkFlg = false;
 		String code = request.getParameter("code");
 		try {
-			if (new Validation().checkNull(this.iProductService.getProductById(code).getCode())) {
+			String codeDb = this.iProductService.getProductById(code).getCode();
+			limitDateDB = this.iProductService.getProductById(code).getLitmiDate();
+			manufacturing_dateDB = this.iProductService.getProductById(code).getManufacturingDate();
+
+			if (new Validation().isNull(codeDb)) {
+				List<Product> productList = (List<Product>) this.iProductService.getList(0, 5);
+				request.setAttribute("listProduct", productList);
 				response.setContentType("text/html;charset=UTF-8");
 				RequestDispatcher reqDispatcher = request.getRequestDispatcher(path);
-				request.setAttribute("notificationMess", "Không Tìm Thấy Sản Phẩm Đã Chọn ! Vui Lòng Kiểm Tra Lại.");
+				request.setAttribute("type", "ERROR");
+				request.setAttribute("errNotification", "Không Tìm Thấy Sản Phẩm Đã Chọn !");
 				reqDispatcher.forward(request, response);
 				return;
 			}
@@ -199,8 +232,12 @@ public class ProductServlet extends HttpServlet {
 		String manufacturing_date = request.getParameter("manufacturingDate");
 		String limit_date = request.getParameter("limitDate");
 		String description = request.getParameter("description");
-		int timeWarning = new Validation().checkNull(request.getParameter("timeWarning1")) ? 7
-				: Integer.parseInt(request.getParameter("timeWarning1"));
+		int timeWarning = new Validation().isNull(request.getParameter("timeWarningEdit")) ? 7
+				: Integer.parseInt(request.getParameter("timeWarningEdit"));
+		if (!(limit_date.equals(limitDateDB) || manufacturing_date.equals(manufacturing_dateDB))) {
+			status = getStatus(manufacturing_date, limit_date, timeWarning);
+			checkFlg = true;
+		}
 //		String image = request.getParameter("image");
 
 		product.setCode(code);
@@ -210,13 +247,14 @@ public class ProductServlet extends HttpServlet {
 		product.setManufacturingDate(manufacturing_date);
 		product.setLitmiDate(limit_date);
 		product.setDescription(description);
-		product.setStatus(getStatus(manufacturing_date, limit_date, timeWarning));
+		product.setStatus(status);
 		try {
-			List<Product> productList = this.iProductService.edit(product);
+			List<Product> productList = this.iProductService.edit(product, checkFlg);
 			request.setAttribute("listProduct", productList);
 			response.setContentType("text/html;charset=UTF-8");
+			request.setAttribute("type", "OK");
 			RequestDispatcher reqDispatcher = request.getRequestDispatcher(path);
-			request.setAttribute("notificationMess", "Cập nhật sản phẩm thành công");
+			request.setAttribute("successNotification", "Cập nhật sản phẩm thành công.");
 			reqDispatcher.forward(request, response);
 			return;
 		} catch (DBException | ServletException | IOException e) {
@@ -230,11 +268,13 @@ public class ProductServlet extends HttpServlet {
 		// TODO Auto-generated method stub
 		String id = request.getParameter("id");
 		String path = "product/List.jsp";
-		if (!new Validation().checkNull(id)) {
+		if (!new Validation().isNull(id)) {
 			try {
 				List<Product> productList = (List<Product>) this.iProductService.deleteById(id);
 				request.setAttribute("listProduct", productList);
 				response.setContentType("text/html;charset=UTF-8");
+				request.setAttribute("type", "OK");
+				request.setAttribute("successNotification", "Xóa sản phẩm thành công");
 				RequestDispatcher rqDispatcher = request.getRequestDispatcher(path);
 				rqDispatcher.forward(request, response);
 				return;
@@ -243,18 +283,35 @@ public class ProductServlet extends HttpServlet {
 				throw new DBException(e);
 			}
 		}
-
+		List<Product> productList = (List<Product>) this.iProductService.getList(0, 5);
+		request.setAttribute("listProduct", productList);
+		response.setContentType("text/html;charset=UTF-8");
+		request.setAttribute("type", "ERROR");
+		request.setAttribute("errNotification", "Không tìm thấy sản phẩm cần XÓA !");
+		RequestDispatcher rqDispatcher = request.getRequestDispatcher(path);
+		rqDispatcher.forward(request, response);
+		return;
 	}
 
-	private void createProduct(HttpServletRequest request, HttpServletResponse response) throws DBException, ServletException, IOException {
+	private void createProduct(HttpServletRequest request, HttpServletResponse response)
+			throws DBException, ServletException, IOException {
 		Product product = new Product();
 		String path = "product/List.jsp";
 		String code = request.getParameter("code");
 		try {
-			if (new Validation().checkNull(this.iProductService.getProductById(code).getCode())) {
+			String codeDB = this.iProductService.getProductById(code).getCode();
+			List<Product> productList = this.iProductService.getList(0, 5);
+			if (new Validation().isNull(code)) {
+				request.setAttribute("listProduct", productList);
 				response.setContentType("text/html;charset=UTF-8");
 				RequestDispatcher reqDispatcher = request.getRequestDispatcher(path);
-				request.setAttribute("notificationMess", "MÃ SẢN PHẨM đã tồn tại !");
+				request.setAttribute("errCreateNotification", "MÃ SẢN PHẨM không được để trống !");
+				reqDispatcher.forward(request, response);
+			} else if (code.equals(codeDB)) {
+				request.setAttribute("listProduct", productList);
+				response.setContentType("text/html;charset=UTF-8");
+				RequestDispatcher reqDispatcher = request.getRequestDispatcher(path);
+				request.setAttribute("errCreateNotification", "MÃ SẢN PHẨM đã tồn tại !");
 				reqDispatcher.forward(request, response);
 				return;
 			}
@@ -262,14 +319,15 @@ public class ProductServlet extends HttpServlet {
 			e.printStackTrace();
 			throw new DBException(e);
 		}
+
 		String name = request.getParameter("name");
 		float price = Float.parseFloat(request.getParameter("price"));
 		int amount = Integer.parseInt(request.getParameter("amount"));
 		String manufacturing_date = request.getParameter("manufacturingDate");
 		String limit_date = request.getParameter("limitDate");
 		String description = request.getParameter("description");
-		int timeWarning = new Validation().checkNull(request.getParameter("timeWarning1")) ? 7
-				: Integer.parseInt(request.getParameter("timeWarning1"));
+		int timeWarning = new Validation().isNull(request.getParameter("timeWarningAdd")) ? 7
+				: Integer.parseInt(request.getParameter("timeWarningAdd"));
 //		String image = request.getParameter("image");
 
 		product.setCode(code);
@@ -285,7 +343,8 @@ public class ProductServlet extends HttpServlet {
 		List<Product> productList = this.iProductService.create(product);
 		request.setAttribute("listProduct", productList);
 		RequestDispatcher reqDispatcher = request.getRequestDispatcher(path);
-		request.setAttribute("notificationMess", "Tạo sản phẩm thành công");
+		request.setAttribute("type", "OK");
+		request.setAttribute("successNotification", "Tạo sản phẩm thành công");
 		reqDispatcher.forward(request, response);
 		return;
 	}
@@ -297,16 +356,16 @@ public class ProductServlet extends HttpServlet {
 		LocalDate from = LocalDate.parse(start, formatter);
 		LocalDate to = LocalDate.parse(end, formatter);
 		longTime = ChronoUnit.DAYS.between(from, to);
-		if (!new Validation().checkNull(end)) {
+		if (!new Validation().isNull(end)) {
 			if (longTime > timeWarning) {
-				status = "Bình Thường";
+				status = ConstantValue.STATUS_OK;
 			} else if (longTime <= timeWarning && longTime >= 0) {
-				status = "Sắp Hết Hạn Sử Dụng !";
+				status = ConstantValue.STATUS_WARNING;
 			} else {
-				status = "Hết Hạn Sử Dụng";
+				status = ConstantValue.STATUS_NOTOK;
 			}
 		} else {
-			status = "Bình Thường";
+			status = ConstantValue.STATUS_OK;
 		}
 		return status;
 	}

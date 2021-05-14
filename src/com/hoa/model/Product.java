@@ -52,7 +52,7 @@ public class Product {
 
 	public String getPrice() {
 		String priceDisplay = "";
-		if (!new Validation().checkNull(String.valueOf(price))) {
+		if (!new Validation().isNull(String.valueOf(price))) {
 			priceDisplay = String.format("%.2f", price);
 		}
 		return priceDisplay;

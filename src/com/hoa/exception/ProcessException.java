@@ -18,7 +18,7 @@ public class ProcessException extends RuntimeException {
 
 	public ProcessException(String messengerError) {
 		super();
-		System.out.println(getClass().getSimpleName() + ": " + "ProcessException: " + getClass().getDeclaredFields() + " " + messengerError);
+		System.out.println(getClass().getSimpleName() + ": " + getClass().getDeclaredFields() + " " + messengerError);
 	}
 
 }

@@ -40,7 +40,7 @@ public class LoginSerlvet extends HttpServlet {
 	protected void doPost(HttpServletRequest req, HttpServletResponse res) throws ServletException, IOException {
 		
 		String action = req.getParameter("action");
-		if(!new Validation().checkNull(action)) {
+		if(!new Validation().isNull(action)) {
 			switch(action){
 			case "Login":
 				
