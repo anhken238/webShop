@@ -1,3 +1,4 @@
+<%@page import="com.hoa.common.Validation"%>
 <%@ page contentType="text/html; charset=UTF-8" language="java"
 	pageEncoding="UTF-8"%>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c"%>
@@ -308,8 +309,9 @@ table.table .avatar {
 	height: 1px;
 	font-weight: bold;
 }
+
 .active {
-    color:red;
+	color: red;
 }
 </style>
 <script type="text/javascript">
@@ -501,12 +503,11 @@ table.table .avatar {
 			$("#notificaption").hide();
 		});
 	})
-	function active(e){
-		var pageNow  = $('#pageNow').val();
+	$(document).ready(function() {
+		var pageNow = $('#pageNow').val();
 		var idPageClick = '#pageItem' + pageNow;
-		var a = $(idPageClick).val();
-		
-	}
+		$(idPageClick).attr('class', 'page-item active');
+	});
 </script>
 </head>
 <body>
@@ -529,28 +530,27 @@ table.table .avatar {
 					<div class="col-sm-6">
 
 						<div class="row">
-							<div class="col-sm-6">
+							<div class="col-sm-8">
 								<div class="input-group">
 									<div class="input-group-btn search-panel">
 										<button type="button" class="btn btn-default dropdown-toggle"
 											style="color: red;" data-toggle="dropdown">
 											<span id="search_concept"
-												style="color: black; font-family: inherit;">Filter by</span>
+												style="color: black; font-family: inherit;">Tìm Kiếm</span>
 											<span class="caret"></span>
 										</button>
 										<ul class="dropdown-menu" role="menu">
-											<li><a href="#contains">Contains</a></li>
-											<li><a href="#its_equal">It's equal</a></li>
-											<li><a href="#greather_than">Greather than ></a></li>
-											<li><a href="#less_than">Less than < </a></li>
+											<li><a href="#contains">Tên Sản Phẩm</a></li>
+											<li><a href="#its_equal">Mã Sản Phẩm</a></li>
+											<li><a href="#greather_than">Trạng Thái</a></li>
 											<li class="divider"></li>
 											<li><a href="#all">Anything</a></li>
 										</ul>
 									</div>
 									<input type="hidden" name="search_param" value="all"
 										id="search_param"> <input type="text"
-										style="height: 38px" class="form-control" name="x"
-										placeholder="Search ..."> <span
+										style="height: 38px; width: 99%;" class="form-control"
+										name="x" placeholder="Search ..."> <span
 										class="input-group-btn">
 										<button class="btn btn-default btn-sm" type="button"
 											style="height: 38px; color: red;">
@@ -590,6 +590,16 @@ table.table .avatar {
 					</tr>
 				</thead>
 				<tbody>
+					<%
+					int total = 0, length = 0, pageNow = 0;
+				if (!new Validation().isNull(String.valueOf(request.getAttribute("totalRecord")))
+						&& !new Validation().isNull(String.valueOf(request.getAttribute("totalPage")))
+						&& !new Validation().isNull(String.valueOf(request.getAttribute("pageNow")))) {
+					total = Integer.parseInt(String.valueOf(request.getAttribute("totalRecord")));
+					length = Integer.parseInt(String.valueOf(request.getAttribute("totalPage")));
+					pageNow = Integer.parseInt(String.valueOf(request.getAttribute("pageNow")));
+				}
+				%>
 					<c:forEach items="${listProduct}" var="product">
 						<tr data-row-name="${product.getCode()}">
 							<td><span class="custom-checkbox"> <input
@@ -609,9 +619,9 @@ table.table .avatar {
 								onclick="updateFunction(event)" data-toggle="modal"><i
 									class="material-icons" data-toggle="tooltip" title="Edit"
 									data-record="${product.getCode()}">&#xE254;</i></a> <a
-								href="${pageContext.request.contextPath}/Products?action=delete&id=${product.getCode()}"
+								href="${pageContext.request.contextPath}/Products?action=delete&id=${product.getCode()}&pageNo=<%=pageNow%>"
 								class="delete" data-toggle="modal"
-								onclick="return confirm('Are you sure you want to delete this item?');"><i
+								onclick="return confirm('Bạn có chắc chắn thực hiện thao tác xóa?');"><i
 									class="material-icons" data-toggle="tooltip" title="Delete">&#xE872;</i></a>
 							</td>
 						</tr>
@@ -620,26 +630,27 @@ table.table .avatar {
 			</table>
 			<div class="clearfix">
 				<div class="hint-text">
-					Showing <b> <select>
-							<option value="5">5</option>
-							<option value="10">10</option>
-							<option value="15">15</option>
+					Showing <b> <select name="forma"
+						onChange="window.location.href=this.value">
+							<option
+								value="${pageContext.request.contextPath}/Products?action=showlist&pageNo=<%=pageNow%>&pageSize=5">5</option>
+							<%-- <option
+								value="${pageContext.request.contextPath}/Products?action=showlist&pageNo=<%=pageNow%>&pageSize=10">10</option>
+							<option
+								value="${pageContext.request.contextPath}/Products?action=showlist&pageNo=<%=pageNow%>&pageSize=15">15</option> --%>
 					</select>
 					</b> out of <b><%=request.getAttribute("totalRecord")%></b> entries
 				</div>
-				<%
-					int total = Integer.parseInt(String.valueOf(request.getAttribute("totalRecord")));
-					int length = Integer.parseInt(String.valueOf(request.getAttribute("totalPage")));
-					int pageNow = Integer.parseInt(String.valueOf(request.getAttribute("pageNow")));
-				%>
-				<input type ="hidden" id="pageNow" value="<%=pageNow%>">
+
+				<input type="hidden" id="pageNow" value="<%=pageNow%>">
 				<ul class="pagination">
 					<li class="page-item"><a
 						href="${pageContext.request.contextPath}/Products?action=showlist&pageNo=<%=pageNow-1%>&pageSize=5">Previous</a></li>
 					<%
 						for (int i = 1; i <= length; i++) {
 					%>
-					<li class="page-item" id="pageItem<%=i%>" onclick="active(event);"><a
+					<li class="page-item" id="pageItem<%=i%>"
+						onclick="activeTagLI(event)"><a
 						href="${pageContext.request.contextPath}/Products?action=showlist&pageNo=<%=i%>&pageSize=5"
 						class="page-link"><%=i%></a></li>
 					<%
@@ -770,6 +781,7 @@ table.table .avatar {
 							<textarea class="form-control" id="descriptionEdit"
 								name="description" required></textarea>
 						</div>
+						<input type="hidden" name="pageNo" value="<%=pageNow%>">
 					</div>
 					<div class="modal-footer">
 						<input type="button" class="btn btn-default" data-dismiss="modal"
@@ -787,7 +799,8 @@ table.table .avatar {
 				<form method="post"
 					action="${pageContext.request.contextPath}/Products?action=delete">
 					<div>
-						<input type="hidden" name="ids" id="ids">
+						<input type="hidden" name="ids" id="ids"> <input
+							type="hidden" name="pageNo" value="<%=pageNow%>">
 					</div>
 					<div class="modal-header">
 						<h4 class="modal-title">Xóa Các Sản Phẩm !</h4>

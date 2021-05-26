@@ -22,4 +22,12 @@ public class DBException extends Exception {
 	public DBException(String s) {
 		System.out.println("DBException:" + s);
 	}
+
+	/**
+	 * @param valueOf
+	 * @param errorNotfound
+	 */
+	public DBException(String valueOf, String errorNotfound) {
+		System.out.println(valueOf + ": " + errorNotfound);
+	}
 }

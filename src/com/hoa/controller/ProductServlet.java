@@ -22,6 +22,7 @@ import com.hoa.exception.ProcessException;
 import com.hoa.model.Product;
 import com.hoa.service.IProductService;
 import com.hoa.service.ProductImpl;
+import com.oracle.wls.shaded.org.apache.bcel.generic.SWITCH;
 
 /**
  * Creator NguyenDucAnh
@@ -60,7 +61,19 @@ public class ProductServlet extends HttpServlet {
 			break;
 		default:
 			try {
-				showListProduct(request, response);
+				int pageSize = 5, startRow = 0, pageNow = 1;
+				if (!new Validation().isNull(request.getParameter("pageNo"))
+						&& !new Validation().isNull(request.getParameter("pageSize"))) {
+					pageSize = Integer.parseInt(request.getParameter("pageSize"));
+					if (Integer.parseInt(request.getParameter("pageNo")) <= 1) {
+						startRow = 0;
+					} else {
+						startRow = Integer.parseInt(request.getParameter("pageNo")) * 5 - 5;
+						pageNow = Integer.parseInt(request.getParameter("pageNo"));
+					}
+				}
+
+				showListProduct(request, response, pageSize, startRow, pageNow, ConstantValue.STATUS_SHOW);
 			} catch (DBException e) {
 				e.printStackTrace();
 			}
@@ -68,26 +81,20 @@ public class ProductServlet extends HttpServlet {
 		}
 	}
 
-	private void showListProduct(HttpServletRequest request, HttpServletResponse response) throws DBException {
-		int pageSize = 5, pageNo = 0;
-		int pageNow = 1;
+	private void showListProduct(HttpServletRequest request, HttpServletResponse response, int pageSize, int startRow,
+			int pageNow, String status) throws DBException {
 		String notificationMess = "";
-		if (!new Validation().isNull(request.getParameter("pageNo"))
-				&& !new Validation().isNull(request.getParameter("pageSize"))) {
-			pageSize = Integer.parseInt(request.getParameter("pageSize"));
-			if(Integer.parseInt(request.getParameter("pageNo")) <= 1) {
-				pageNo = 0;
-			}else{
-				pageNo = Integer.parseInt(request.getParameter("pageNo"))*5 - 5;
-				pageNow = Integer.parseInt(request.getParameter("pageNo"));
-			}
-		}
 		int count = 0;
-		count = this.iProductService.getTotalRecord();
 		String path = "product/List.jsp";
 		List<Product> productList = new ArrayList<Product>();
+		if (startRow <= 1 && !ConstantValue.STATUS_SHOW.equals(status)) {
+			startRow = 0;
+		} else {
+			startRow = pageNow * 5 - 5;
+		}
 		try {
-			productList = this.iProductService.getList(pageNo, pageSize);
+			count = this.iProductService.getTotalRecord();
+			productList = this.iProductService.getList(startRow, pageSize);
 
 		} catch (DBException e) {
 			throw new DBException(e);
@@ -99,6 +106,43 @@ public class ProductServlet extends HttpServlet {
 		}
 		RequestDispatcher rq = request.getRequestDispatcher(path);
 		int pageTotal = (int) Math.ceil(((double) count / (double) pageSize));
+		switch (status) {
+		case ConstantValue.STATUS_EDIT_OK:
+			response.setContentType("text/html;charset=UTF-8");
+			request.setAttribute("type", "OK");
+			request.setAttribute("successNotification", "Cập nhật sản phẩm thành công.");
+			break;
+		case ConstantValue.STATUS_EDIT_ERR:
+			response.setContentType("text/html;charset=UTF-8");
+			request.setAttribute("errCreateNotification", "Mã sản phẩm không hợp lệ");
+		case ConstantValue.STATUS_CREATE_OK:
+			response.setContentType("text/html;charset=UTF-8");
+			request.setAttribute("type", "OK");
+			request.setAttribute("successNotification", "Tạo sản phẩm thành công");
+			break;
+		case ConstantValue.STATUS_CREATE_ERR:
+			response.setContentType("text/html;charset=UTF-8");
+			request.setAttribute("errCreateNotification", "MÃ SẢN PHẨM đã tồn tại !");
+			break;
+		case ConstantValue.STATUS_DELETE_ERR:
+			response.setContentType("text/html;charset=UTF-8");
+			request.setAttribute("type", "ERROR");
+			request.setAttribute("successNotification", "Không tìm thấy sản phẩm cần XÓA !");
+			break;
+		case ConstantValue.STATUS_DELETE_OK:
+			response.setContentType("text/html;charset=UTF-8");
+			request.setAttribute("type", "OK");
+			request.setAttribute("successNotification", "Xóa sản phẩm thành công");
+			break;
+			
+		case ConstantValue.STATUS_EXCEPTION:
+			response.setContentType("text/html;charset=UTF-8");
+			request.setAttribute("type", "ERROR");
+			request.setAttribute("successNotification", "Đã xảy ra lỗi ! Xin thực hiện lại.");
+			break;
+		default:
+			break;
+		}
 		request.setAttribute("listProduct", productList);
 		request.setAttribute("totalRecord", count);
 		request.setAttribute("totalPage", pageTotal);
@@ -106,6 +150,7 @@ public class ProductServlet extends HttpServlet {
 		request.setAttribute("notificationMess", notificationMess);
 		try {
 			rq.forward(request, response);
+			return;
 		} catch (ServletException e) {
 			e.printStackTrace();
 		} catch (IOException e) {
@@ -162,25 +207,21 @@ public class ProductServlet extends HttpServlet {
 	private void deleteMultiplesProduct(HttpServletRequest request, HttpServletResponse response)
 			throws DBException, ServletException, IOException {
 		String ids = request.getParameter("ids");
-		String path = "product/List.jsp";
+		int pageNow = 0, startRow = 0 ;
 		if (new Validation().isNull(ids)) {
-			List<Product> productList = (List<Product>) this.iProductService.getList(0, 5);
-			request.setAttribute("listProduct", productList);
-			RequestDispatcher reqDispatcher = request.getRequestDispatcher(path);
-			request.setAttribute("deleteNotification", "Không Tìm Thấy Sản Phẩm Đã Chọn ! Vui Lòng Kiểm Tra Lại.");
-			try {
-				reqDispatcher.forward(request, response);
+			if(new Validation().isNull(request.getParameter("pageNo"))) {
+				pageNow = Integer.parseInt(request.getParameter("pageNo"));
+				startRow = Integer.parseInt(request.getParameter("pageNo"));
+				showListProduct(request, response, 5, startRow, pageNow, ConstantValue.STATUS_EXCEPTION);
 				return;
-			} catch (ServletException | IOException e) {
-				e.printStackTrace();
 			}
+			//case id error
 		}
 		StringBuilder idList = this.handleIds(ids);
-		List<Product> productList = this.iProductService.deleteMultiplesProducts(idList);
-		request.setAttribute("listProduct", productList);
-		RequestDispatcher reqDispatcher = request.getRequestDispatcher(path);
-		request.setAttribute("notificationMess", "Xóa sản phẩm thành công");
-		reqDispatcher.forward(request, response);
+		this.iProductService.deleteMultiplesProducts(idList);
+		pageNow = Integer.parseInt(request.getParameter("pageNo"));
+		startRow = Integer.parseInt(request.getParameter("pageNo"));
+		showListProduct(request, response, 5, startRow, pageNow, ConstantValue.STATUS_DELETE_OK);
 		return;
 	}
 
@@ -203,26 +244,26 @@ public class ProductServlet extends HttpServlet {
 
 	private void editProduct(HttpServletRequest request, HttpServletResponse response) throws DBException {
 		Product product = new Product();
-		String path = "product/List.jsp";
 		String status = "", limitDateDB = "", manufacturing_dateDB = "";
 		boolean checkFlg = false;
 		String code = request.getParameter("code");
+		int startRow = 0, pageNow;
+		if (!new Validation().isNull(request.getParameter("pageNo"))) {
+			startRow = Integer.parseInt(request.getParameter("pageNo"));
+			pageNow = Integer.parseInt(request.getParameter("pageNo"));
+		} else {
+			throw new DBException(String.valueOf(startRow), ConstantValue.ERROR_NOTFOUND);
+		}
 		try {
 			String codeDb = this.iProductService.getProductById(code).getCode();
 			limitDateDB = this.iProductService.getProductById(code).getLitmiDate();
 			manufacturing_dateDB = this.iProductService.getProductById(code).getManufacturingDate();
 
-			if (new Validation().isNull(codeDb)) {
-				List<Product> productList = (List<Product>) this.iProductService.getList(0, 5);
-				request.setAttribute("listProduct", productList);
-				response.setContentType("text/html;charset=UTF-8");
-				RequestDispatcher reqDispatcher = request.getRequestDispatcher(path);
-				request.setAttribute("type", "ERROR");
-				request.setAttribute("errNotification", "Không Tìm Thấy Sản Phẩm Đã Chọn !");
-				reqDispatcher.forward(request, response);
+			if (new Validation().isNull(code) || codeDb.equals("code")) {
+				showListProduct(request, response, 5, startRow, pageNow, ConstantValue.STATUS_EDIT_ERR);
 				return;
 			}
-		} catch (DBException | IOException | ServletException e) {
+		} catch (DBException e) {
 			e.printStackTrace();
 			throw new DBException(e);
 		}
@@ -249,15 +290,10 @@ public class ProductServlet extends HttpServlet {
 		product.setDescription(description);
 		product.setStatus(status);
 		try {
-			List<Product> productList = this.iProductService.edit(product, checkFlg);
-			request.setAttribute("listProduct", productList);
-			response.setContentType("text/html;charset=UTF-8");
-			request.setAttribute("type", "OK");
-			RequestDispatcher reqDispatcher = request.getRequestDispatcher(path);
-			request.setAttribute("successNotification", "Cập nhật sản phẩm thành công.");
-			reqDispatcher.forward(request, response);
+			this.iProductService.edit(product, checkFlg);
+			showListProduct(request, response, 5, startRow, pageNow, ConstantValue.STATUS_EDIT_OK);
 			return;
-		} catch (DBException | ServletException | IOException e) {
+		} catch (DBException e) {
 			e.printStackTrace();
 		}
 
@@ -267,55 +303,49 @@ public class ProductServlet extends HttpServlet {
 			throws DBException, ServletException, IOException {
 		// TODO Auto-generated method stub
 		String id = request.getParameter("id");
-		String path = "product/List.jsp";
+		int pageNow = 0, startRow = 0 ;
 		if (!new Validation().isNull(id)) {
 			try {
-				List<Product> productList = (List<Product>) this.iProductService.deleteById(id);
-				request.setAttribute("listProduct", productList);
-				response.setContentType("text/html;charset=UTF-8");
-				request.setAttribute("type", "OK");
-				request.setAttribute("successNotification", "Xóa sản phẩm thành công");
-				RequestDispatcher rqDispatcher = request.getRequestDispatcher(path);
-				rqDispatcher.forward(request, response);
+				if(new Validation().isNull(request.getParameter("pageNo"))) {
+					pageNow = Integer.parseInt(request.getParameter("pageNo"));
+					startRow = Integer.parseInt(request.getParameter("pageNo"));
+					showListProduct(request, response, 5, startRow, pageNow, ConstantValue.STATUS_EXCEPTION);
+					return;
+				}
+				if(new Validation().isNull(this.iProductService.getProductById(id).getCode())) {
+					pageNow = Integer.parseInt(request.getParameter("pageNo"));
+					startRow = Integer.parseInt(request.getParameter("pageNo"));
+					showListProduct(request, response, 5, startRow, pageNow, ConstantValue.STATUS_DELETE_ERR);
+					return;
+				}
+				this.iProductService.deleteById(id);
+				pageNow = Integer.parseInt(request.getParameter("pageNo"));
+				startRow = Integer.parseInt(request.getParameter("pageNo"));
+				showListProduct(request, response, 5, startRow, pageNow, ConstantValue.STATUS_DELETE_OK);
 				return;
 			} catch (DBException e) {
 				e.printStackTrace();
 				throw new DBException(e);
 			}
 		}
-		List<Product> productList = (List<Product>) this.iProductService.getList(0, 5);
-		request.setAttribute("listProduct", productList);
-		response.setContentType("text/html;charset=UTF-8");
-		request.setAttribute("type", "ERROR");
-		request.setAttribute("errNotification", "Không tìm thấy sản phẩm cần XÓA !");
-		RequestDispatcher rqDispatcher = request.getRequestDispatcher(path);
-		rqDispatcher.forward(request, response);
-		return;
 	}
 
 	private void createProduct(HttpServletRequest request, HttpServletResponse response)
 			throws DBException, ServletException, IOException {
 		Product product = new Product();
-		String path = "product/List.jsp";
 		String code = request.getParameter("code");
+		int startRow = 0, pageNow = 0;
+		if (!new Validation().isNull(request.getParameter("pageNo"))) {
+			pageNow = Integer.parseInt(request.getParameter("pageNo"));
+			startRow = Integer.parseInt(request.getParameter("pageNo"));
+		}
 		try {
 			String codeDB = this.iProductService.getProductById(code).getCode();
-			List<Product> productList = this.iProductService.getList(0, 5);
-			if (new Validation().isNull(code)) {
-				request.setAttribute("listProduct", productList);
-				response.setContentType("text/html;charset=UTF-8");
-				RequestDispatcher reqDispatcher = request.getRequestDispatcher(path);
-				request.setAttribute("errCreateNotification", "MÃ SẢN PHẨM không được để trống !");
-				reqDispatcher.forward(request, response);
-			} else if (code.equals(codeDB)) {
-				request.setAttribute("listProduct", productList);
-				response.setContentType("text/html;charset=UTF-8");
-				RequestDispatcher reqDispatcher = request.getRequestDispatcher(path);
-				request.setAttribute("errCreateNotification", "MÃ SẢN PHẨM đã tồn tại !");
-				reqDispatcher.forward(request, response);
+			if (new Validation().isNull(code) || code.equals(codeDB)) {
+				showListProduct(request, response, 5, startRow, pageNow, ConstantValue.STATUS_CREATE_ERR);
 				return;
 			}
-		} catch (DBException | IOException | ServletException e) {
+		} catch (DBException e) {
 			e.printStackTrace();
 			throw new DBException(e);
 		}
@@ -340,12 +370,12 @@ public class ProductServlet extends HttpServlet {
 		product.setStatus(getStatus(manufacturing_date, limit_date, timeWarning));
 //		product.setImage(image);
 		response.setContentType("text/html;charset=UTF-8");
-		List<Product> productList = this.iProductService.create(product);
-		request.setAttribute("listProduct", productList);
-		RequestDispatcher reqDispatcher = request.getRequestDispatcher(path);
-		request.setAttribute("type", "OK");
-		request.setAttribute("successNotification", "Tạo sản phẩm thành công");
-		reqDispatcher.forward(request, response);
+		this.iProductService.create(product);
+		int total = 0 , pageSize =5;
+		total = this.iProductService.getTotalRecord();
+		int pageFinally = (int) Math.ceil(((double) total / (double) pageSize));
+		startRow = pageFinally;
+		showListProduct(request, response, pageSize, startRow, pageFinally, ConstantValue.STATUS_CREATE_OK);
 		return;
 	}
 

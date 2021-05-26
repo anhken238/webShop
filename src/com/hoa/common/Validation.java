@@ -7,7 +7,7 @@ package com.hoa.common;
 public class Validation {
 	public boolean isNull(String str) {
 		boolean check = false;
-		if(str == "" || str == null) {
+		if(str == "" || str == null || str.equals("null")) {
 			check = true;
 		}
 		return check;

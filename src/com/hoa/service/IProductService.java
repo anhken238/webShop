@@ -12,15 +12,15 @@ import com.hoa.model.Product;
  */
 public interface IProductService {
 
-	public List<Product> create(Product product) throws DBException;
+	public void create(Product product) throws DBException;
 
-	public List<Product> getList(int pageNo, int pageSize) throws DBException;
+	public List<Product> getList(int startRow, int pageSize) throws DBException;
 
-	public List<Product> deleteById(String id) throws DBException;
+	public  void deleteById(String id) throws DBException;
 
-	public List<Product> edit(Product product, Boolean timeWarning) throws DBException;
+	public void edit(Product product, Boolean timeWarning) throws DBException;
 
-	public List<Product> deleteMultiplesProducts(StringBuilder ids) throws DBException;
+	public void deleteMultiplesProducts(StringBuilder ids) throws DBException;
 
 	public int getTotalRecord() throws DBException;
 

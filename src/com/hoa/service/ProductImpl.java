@@ -25,8 +25,8 @@ public class ProductImpl implements IProductService {
 	IDataAcessLayer iDataAcessLayer = new DataAccessImpl();
 
 	@Override
-	public List<Product> create(Product product) throws DBException {
-		List<Product> list = new ArrayList<Product>();
+	public void create(Product product) throws DBException {
+
 		PreparedStatement ps = null;
 		StringBuilder strSql = new StringBuilder();
 		int index = 1;
@@ -46,20 +46,18 @@ public class ProductImpl implements IProductService {
 			ps.setString(index++, product.getDescription());
 			ps.setString(index++, product.getStatus());
 
-			int status = ps.executeUpdate();
+			ps.executeUpdate();
 			iDataAcessLayer.commit();
 //			if(!new Validation().checkNull(product.getImage())) {
 //				createFileOfProduct(product);
 //			}
-			if (status > 0) {
-				list = this.getList();
-			} else {
-				try {
-					iDataAcessLayer.rollBack();
-				} catch (Exception e) {
-					// throw new ProcessException();
-				}
+
+			try {
+				iDataAcessLayer.rollBack();
+			} catch (Exception e) {
+				// throw new ProcessException();
 			}
+
 		} catch (Exception e) {
 			throw new DBException(e);
 		} finally {
@@ -77,7 +75,6 @@ public class ProductImpl implements IProductService {
 				throw new DBException(e);
 			}
 		}
-		return list;
 	}
 
 	private void createFileOfProduct(Product product) throws DBException {
@@ -179,8 +176,7 @@ public class ProductImpl implements IProductService {
 	}
 
 	@Override
-	public List<Product> edit(Product product, Boolean checkFlg) throws DBException {
-		List<Product> list = new ArrayList<>();
+	public void edit(Product product, Boolean checkFlg) throws DBException {
 		PreparedStatement ps = null;
 		int index = 1;
 		StringBuilder strSql = new StringBuilder();
@@ -207,11 +203,8 @@ public class ProductImpl implements IProductService {
 				ps.setString(index++, product.getStatus());
 			}
 			ps.setString(index++, product.getCode());
-			int status = ps.executeUpdate();
+			ps.executeUpdate();
 			iDataAcessLayer.commit();
-			if (status > 0) {
-				list = this.getList();
-			}
 		} catch (Exception e) {
 			throw new DBException(e);
 		} finally {
@@ -229,7 +222,6 @@ public class ProductImpl implements IProductService {
 				throw new DBException(e);
 			}
 		}
-		return list;
 	}
 
 	@Override
@@ -269,7 +261,7 @@ public class ProductImpl implements IProductService {
 	}
 
 	@Override
-	public List<Product> getList(int pageNo, int pageSize) throws DBException {
+	public List<Product> getList(int startRow, int pageSize) throws DBException {
 		List<Product> productList = new ArrayList<>();
 		PreparedStatement ps = null;
 		ResultSet rs = null;
@@ -278,11 +270,13 @@ public class ProductImpl implements IProductService {
 			strSql.append(" SELECT *   ");
 			strSql.append(" FROM       ");
 			strSql.append(" PRODUCT   ");
+			strSql.append(" ORDER BY LIMIT_DATE ASC  ");
 			strSql.append(" LIMIT ?   ");
-			strSql.append(" OFFSET ? ;  ");
+			strSql.append(" OFFSET ?  ; ");
+			
 			ps = iDataAcessLayer.prepaStatement(strSql);
 			ps.setInt(1, pageSize);
-			ps.setInt(2, pageNo);
+			ps.setInt(2, startRow);
 			rs = ps.executeQuery();
 			while (rs.next()) {
 				Product product = new Product();
@@ -324,8 +318,7 @@ public class ProductImpl implements IProductService {
 	}
 
 	@Override
-	public List<Product> deleteById(String id) throws DBException {
-		List<Product> list = new ArrayList<Product>();
+	public void deleteById(String id) throws DBException {
 		PreparedStatement ps = null;
 		StringBuilder strSql = new StringBuilder();
 		try {
@@ -335,11 +328,8 @@ public class ProductImpl implements IProductService {
 			strSql.append(" WHERE CODE = ? ;  ");
 			ps = iDataAcessLayer.prepaStatement(strSql);
 			ps.setString(1, id);
-			int status = ps.executeUpdate();
+			ps.executeUpdate();
 			iDataAcessLayer.commit();
-			if (status > 0) {
-				list = this.getList();
-			}
 		} catch (Exception e) {
 			throw new DBException(e);
 		} finally {
@@ -357,12 +347,10 @@ public class ProductImpl implements IProductService {
 				throw new DBException(e);
 			}
 		}
-		return list;
 	}
 
 	@Override
-	public List<Product> deleteMultiplesProducts(StringBuilder ids) throws DBException {
-		List<Product> list = new ArrayList<Product>();
+	public void deleteMultiplesProducts(StringBuilder ids) throws DBException {
 		PreparedStatement ps = null;
 		StringBuilder strSql = new StringBuilder();
 		try {
@@ -373,11 +361,8 @@ public class ProductImpl implements IProductService {
 			strSql.append(ids);
 			strSql.append("); ");
 			ps = iDataAcessLayer.prepaStatement(strSql);
-			int status = ps.executeUpdate();
+			ps.executeUpdate();
 			iDataAcessLayer.commit();
-			if (status > 0) {
-				list = this.getList();
-			}
 		} catch (Exception e) {
 			throw new DBException(e);
 		} finally {
@@ -395,7 +380,6 @@ public class ProductImpl implements IProductService {
 				throw new DBException(e);
 			}
 		}
-		return list;
 	}
 
 }
